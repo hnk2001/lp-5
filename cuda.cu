@@ -14,50 +14,33 @@ __global__ void matmul(int* A, int* B, int* C, int N) {
 }
 
 int main() {
-    int N = 512;
-    int size = N * N * sizeof(int);
-    int* A, * B, * C;
-    int* dev_A, * dev_B, * dev_C;
-    cudaMallocHost(&A, size);
-    cudaMallocHost(&B, size);
-    cudaMallocHost(&C, size);
-    cudaMalloc(&dev_A, size);
-    cudaMalloc(&dev_B, size);
-    cudaMalloc(&dev_C, size);
+    // Example matrices
+    const int N = 2;
+    int A[N][N] = {{1, 2},
+                   {3, 4}};
+    int B[N][N] = {{5, 6},
+                   {7, 8}};
+    int C[N][N];
 
-    // Initialize matrices A and B
+    // Perform matrix multiplication
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
-            A[i*N+j] = i*N+j;
-            B[i*N+j] = j*N+i;
+            int sum = 0;
+            for (int k = 0; k < N; k++) {
+                sum += A[i][k] * B[k][j];
+            }
+            C[i][j] = sum;
         }
     }
 
-    cudaMemcpy(dev_A, A, size, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_B, B, size, cudaMemcpyHostToDevice);
-
-    dim3 dimBlock(16, 16);
-    dim3 dimGrid(N/dimBlock.x, N/dimBlock.y);
-
-    matmul<<<dimGrid, dimBlock>>>(dev_A, dev_B, dev_C, N);
-
-    cudaMemcpy(C, dev_C, size, cudaMemcpyDeviceToHost);
-
     // Print the result
-    for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 10; j++) {
-            std::cout << C[i*N+j] << " ";
+    std::cout << "Result of matrix multiplication:" << std::endl;
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            std::cout << C[i][j] << " ";
         }
         std::cout << std::endl;
     }
-
-    // Free memory
-    cudaFree(dev_A);
-    cudaFree(dev_B);
-    cudaFree(dev_C);
-    cudaFreeHost(A);
-    cudaFreeHost(B);
-    cudaFreeHost(C);
 
     return 0;
 }
